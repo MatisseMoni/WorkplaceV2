@@ -1,0 +1,12 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - user: php-actions/composer@v1
+      - user: php-actions/phpunit@v9
