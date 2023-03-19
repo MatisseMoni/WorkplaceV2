@@ -13,6 +13,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\PrivateMessageRepository;
 use Symfony\Component\Serializer\Annotation\Groups;
+use App\Controller\CreatePrivateMessageController;
 
 
 #[ORM\Entity(repositoryClass: PrivateMessageRepository::class)]
@@ -20,7 +21,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
     operations: [
         new Post(
             denormalizationContext: ['groups' => ['privateMessage:write']],
-            security: "is_granted('ROLE_USER')"
+            security: "is_granted('ROLE_USER')",
+            controller: CreatePrivateMessageController::class
         ),
         new Delete(
             security: "is_granted('ROLE_ADMIN') or object.getOwner() == user"
