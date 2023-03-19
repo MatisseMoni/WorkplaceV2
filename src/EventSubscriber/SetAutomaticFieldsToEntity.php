@@ -87,6 +87,9 @@ class SetAutomaticFieldsToEntity implements EventSubscriberInterface
                 break;
             case Conversation::class:
                 /** @var Conversation $entity */
+                if ($entity->getTenant() === $user) {
+                    throw new \Exception('You cannot create a conversation with yourself');
+                }
                 $entity->setOwner($user);
                 break;
             case PrivateMessage::class:

@@ -2,13 +2,41 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\PrivateMessageRepository;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\Link;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use App\Repository\PrivateMessageRepository;
+use Symfony\Component\Serializer\Annotation\Groups;
+
 
 #[ORM\Entity(repositoryClass: PrivateMessageRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Post(
+            denormalizationContext: ['groups' => ['privateMessage:write']],
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Delete(
+            security: "is_granted('ROLE_ADMIN') or object.getOwner() == user"
+        ),
+    ]
+)]
+#[ApiResource(
+    uriTemplate: '/conversations/{conversations_id}/privateMessages',
+    operations: [ new GetCollection() ],
+    uriVariables: [
+        'conversations_id' => new Link(toProperty: 'conversation', fromClass: Conversation::class),
+    ],
+    denormalizationContext: ['groups' => ['privateMessage:read']],
+    security: "is_granted('ROLE_USER')"
+)]
+
 class PrivateMessage
 {
     #[ORM\Id]
@@ -18,6 +46,7 @@ class PrivateMessage
 
     #[ORM\ManyToOne(inversedBy: 'privateMessages')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['privateMessage:write'])]
     private ?Conversation $conversation = null;
 
     #[ORM\ManyToOne(inversedBy: 'privateMessages')]
@@ -25,14 +54,15 @@ class PrivateMessage
     private ?User $owner = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['privateMessage:write', 'privateMessage:read'])]
     private ?string $content = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $CreatedAt = null;
+    private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()
     {
-        $this->CreatedAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -78,12 +108,12 @@ class PrivateMessage
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->CreatedAt;
+        return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $CreatedAt): self
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
     {
-        $this->CreatedAt = $CreatedAt;
+        $this->createdAt = $createdAt;
 
         return $this;
     }

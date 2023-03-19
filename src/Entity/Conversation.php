@@ -10,40 +10,51 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\ConversationRepository;
 use Doctrine\Common\Collections\Collection;
+use App\Controller\GetConversationsController;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ConversationRepository::class)]
 #[ApiResource(
     operations: [
-        new GetCollection(),
-        new Post(),
-        new Get(),
-        new Delete()
-    ],
-    normalizationContext: ['groups' => ['conversation:read']],
-    denormalizationContext: ['groups' => ['conversation:create']],
+        new GetCollection(
+            controller: GetConversationsController::class,
+            description: 'Get all conversations of the current user',
+            name: 'get_conversations',
+            normalizationContext: ['groups' => ['conversation:teaser']]
+        ),
+        new Post(
+            denormalizationContext: ['groups' => ['conversation:create']],
+            security: "is_granted('ROLE_USER')",
+        ),
+        new Delete(security: "is_granted('ROLE_ADMIN') or object.getOwner() == user"),
+    ]
 )]
+
 class Conversation
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['conversation:teaser'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'ownedConversations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $owner = null;
 
-    #[Groups(['conversation:create'])]
+    
     #[ORM\ManyToOne(inversedBy: 'tenantConversations')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['conversation:create'])]
     private ?User $tenant = null;
 
     #[ORM\OneToMany(mappedBy: 'conversation', targetEntity: PrivateMessage::class, orphanRemoval: true)]
+    #[Groups(['conversation:read'])]
     private Collection $privateMessages;
 
     #[ORM\Column]
+    #[Groups(['conversation:teaser'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()
@@ -69,12 +80,12 @@ class Conversation
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getTenant(): ?User
     {
         return $this->tenant;
     }
 
-    public function setUser(?User $tenant): self
+    public function setTenant(?User $tenant): self
     {
         $this->tenant = $tenant;
 
