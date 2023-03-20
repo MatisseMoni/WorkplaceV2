@@ -116,6 +116,6 @@ class PrivateMessagesTest extends ApiTestCase
                 "conversation" => $iriConversation
             ]
         ]);
-        $this->assertResponseStatusCodeSame(500);
+        $this->assertResponseStatusCodeSame(400);
     }
 }

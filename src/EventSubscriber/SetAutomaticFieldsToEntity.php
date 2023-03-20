@@ -19,6 +19,8 @@ use ApiPlatform\Symfony\EventListener\EventPriorities;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+
 
 class SetAutomaticFieldsToEntity implements EventSubscriberInterface
 {
@@ -94,7 +96,7 @@ class SetAutomaticFieldsToEntity implements EventSubscriberInterface
             case Conversation::class:
                 /** @var Conversation $entity */
                 if ($entity->getTenant() === $user) {
-                    throw new \Exception('You cannot create a conversation with yourself');
+                    throw new BadRequestHttpException('You cannot create a conversation with yourself');
                 }
                 $user2 = $entity->getTenant();
                 $existingConversation = $entityManager->getRepository(Conversation::class)->findOneBy([
@@ -102,7 +104,7 @@ class SetAutomaticFieldsToEntity implements EventSubscriberInterface
                     'tenant' => $user2,
                 ]);
                 if ($existingConversation) {
-                    throw new \Exception('You already have a conversation with this user');
+                    throw new BadRequestHttpException('You already have a conversation with this user');
                 }
                 $entity->setOwner($user);
                 break;
