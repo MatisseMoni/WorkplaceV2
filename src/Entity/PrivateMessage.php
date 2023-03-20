@@ -30,7 +30,7 @@ use App\Controller\CreatePrivateMessageController;
     ]
 )]
 #[ApiResource(
-    uriTemplate: '/conversations/{conversations_id}/privateMessages',
+    uriTemplate: '/conversations/{conversations_id}/private_messages',
     operations: [ new GetCollection() ],
     uriVariables: [
         'conversations_id' => new Link(toProperty: 'conversation', fromClass: Conversation::class),

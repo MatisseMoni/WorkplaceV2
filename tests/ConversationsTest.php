@@ -2,21 +2,16 @@
 
 namespace App\Tests;
 
+use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
 use Hautelook\AliceBundle\PhpUnit\RecreateDatabaseTrait;
 
-class ConversationsTest extends AbstractTest
+class ConversationsTest extends ApiTestCase
 {
-
-    /* public function testGetConversations()
-    {
-        $response = static::createClient()->request('GET', '/api/conversations');
-        $this->assertResponseStatusCodeSame(200);
-        $this->assertCount(3, $response->toArray()['hydra:member']);
-    } */
+    use RecreateDatabaseTrait;
 
     public function testCreateConversation()
     {
-
+        
         $client = static::createClient();
         $client->disableReboot();
 
@@ -31,8 +26,8 @@ class ConversationsTest extends AbstractTest
             'email' => 'user1@test.com',
             'password' => 'User1',
         ]]);
-
         $this->assertResponseIsSuccessful();
+
         $data = $response->toArray();
         $token = $data['token'];
         $client->request('POST', '/api/conversations', [
@@ -43,4 +38,5 @@ class ConversationsTest extends AbstractTest
         ]);
         $this->assertResponseStatusCodeSame(201);
     }
+    
 }

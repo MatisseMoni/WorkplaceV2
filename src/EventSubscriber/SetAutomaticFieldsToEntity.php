@@ -2,26 +2,32 @@
 
 namespace App\EventSubscriber;
 
-use ApiPlatform\Symfony\EventListener\EventPriorities;
-use App\Entity\Conversation;
-use App\Entity\Group;
-use App\Entity\GroupRequest;
-use App\Entity\Message;
-use App\Entity\PrivateMessage;
-use App\Entity\Thread;
 use App\Entity\User;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use App\Entity\Group;
+use App\Entity\Thread;
+use App\Entity\Message;
+use App\Entity\Conversation;
+use App\Entity\GroupRequest;
+use App\Entity\PrivateMessage;
+use Doctrine\ORM\Mapping\Entity;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\String\Slugger\AsciiSlugger;
+use ApiPlatform\Symfony\EventListener\EventPriorities;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class SetAutomaticFieldsToEntity implements EventSubscriberInterface
 {
-    public function __construct(private readonly TokenStorageInterface $tokenStorage)
+
+    private $entityManager;
+
+    public function __construct(private readonly TokenStorageInterface $tokenStorage, EntityManagerInterface $entityManager)
     {
+        $this->entityManager = $entityManager;
     }
 
     /**
@@ -41,7 +47,7 @@ class SetAutomaticFieldsToEntity implements EventSubscriberInterface
 
         if ($this->needExtraData($entity)) {
             if (Request::METHOD_POST === $method) {
-                $this->setProperties($entity, $this->tokenStorage->getToken()->getUser());
+                $this->setProperties($entity, $this->tokenStorage->getToken()->getUser(), $this->entityManager);
             }
             if (Request::METHOD_PATCH === $method) {
                 $this->updateProperties($entity);
@@ -63,7 +69,7 @@ class SetAutomaticFieldsToEntity implements EventSubscriberInterface
      * @param UserInterface $user
      * @return void
      */
-    public function setProperties(mixed $entity, UserInterface $user): void
+    public function setProperties(mixed $entity, UserInterface $user, EntityManagerInterface $entityManager): void
     {
         /** @var User $user */
         switch (get_class($entity)) {
@@ -89,6 +95,14 @@ class SetAutomaticFieldsToEntity implements EventSubscriberInterface
                 /** @var Conversation $entity */
                 if ($entity->getTenant() === $user) {
                     throw new \Exception('You cannot create a conversation with yourself');
+                }
+                $user2 = $entity->getTenant();
+                $existingConversation = $entityManager->getRepository(Conversation::class)->findOneBy([
+                    'owner' => $user,
+                    'tenant' => $user2,
+                ]);
+                if ($existingConversation) {
+                    throw new \Exception('You already have a conversation with this user');
                 }
                 $entity->setOwner($user);
                 break;
