@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\GetCollection;
 use App\Repository\ConversationRepository;
 use Doctrine\Common\Collections\Collection;
 use App\Controller\GetConversationsController;
+use App\Controller\CreateConversationController;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -41,12 +42,13 @@ class Conversation
 
     #[ORM\ManyToOne(inversedBy: 'ownedConversations')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['conversation:teaser'])]
     private ?User $owner = null;
 
     
     #[ORM\ManyToOne(inversedBy: 'tenantConversations')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['conversation:create'])]
+    #[Groups(['conversation:create', 'conversation:teaser'])]
     private ?User $tenant = null;
 
     #[ORM\OneToMany(mappedBy: 'conversation', targetEntity: PrivateMessage::class, orphanRemoval: true)]
