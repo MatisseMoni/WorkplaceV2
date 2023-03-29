@@ -95,9 +95,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Message::class)]
     private Collection $messages;
 
+    #[Groups(['user:read'])]
     #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Conversation::class, orphanRemoval: true)]
     private Collection $ownedConversations;
 
+    #[Groups(['user:read'])]
     #[ORM\OneToMany(mappedBy: 'tenant', targetEntity: Conversation::class)]
     private Collection $tenantConversations;
 

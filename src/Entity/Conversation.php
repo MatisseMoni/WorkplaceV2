@@ -26,6 +26,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Post(
             denormalizationContext: ['groups' => ['conversation:create']],
+
             security: "is_granted('ROLE_USER')",
         ),
         new Delete(security: "is_granted('ROLE_ADMIN') or object.getOwner() == user"),
